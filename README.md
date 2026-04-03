@@ -64,7 +64,7 @@ npm run dev
 * Create a project
 * Add tasks and track progress
 
-## License
+## Deployment
 **Backend:** https://pro-tasker-backend-za90.onrender.com/
 **Frontend:** https://protaskerfrontend.netlify.app/login
 
