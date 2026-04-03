@@ -76,22 +76,23 @@ function ProjectDetails() {
     setEditDesc(task.description || "");
   };
 
-  const saveEdit = async (taskId) => {
-    try {
-      const res = await axios.put(
-        `${API_URL}/tasks/${taskId}`,
-        { title: editTitle, description: editDesc },
-        { headers }
-      );
-      setTasks((prev) => prev.map((task) => (task._id === taskId ? res.data : task)));
-      setEditingTaskId(null);
-      setEditTitle("");
-      setEditDesc("");
-      setError("");
-    } catch (err) {
-      setError("Could not update task");
-    }
-  };
+ const saveEdit = async (taskId) => {
+  try {
+    const res = await axios.patch(
+      `${API_URL}/projects/${projectId}/tasks/${taskId}`,
+      { title: editTitle, description: editDesc },
+      { headers }
+    );
+    setTasks((prev) => prev.map((task) => (task._id === taskId ? res.data : task)));
+    setEditingTaskId(null);
+    setEditTitle("");
+    setEditDesc("");
+    setError("");
+  } catch (err) {
+    setError("Could not update task");
+  }
+};
+
 
   const cancelEdit = () => {
     setEditingTaskId(null);
@@ -100,28 +101,28 @@ function ProjectDetails() {
   };
 
   const deleteTask = async (taskId) => {
-    try {
-      await axios.delete(`${API_URL}/tasks/${taskId}`, { headers });
-      setTasks((prev) => prev.filter((task) => task._id !== taskId));
-      setError("");
-    } catch (err) {
-      setError("Could not delete task");
-    }
-  };
+  try {
+    await axios.delete(`${API_URL}/projects/${projectId}/tasks/${taskId}`, { headers });
+    setTasks((prev) => prev.filter((task) => task._id !== taskId));
+    setError("");
+  } catch (err) {
+    setError("Could not delete task");
+  }
+};
 
-  const updateStatus = async (taskId, newStatus) => {
-    try {
-      const res = await axios.put(
-        `${API_URL}/tasks/${taskId}`,
-        { status: newStatus },
-        { headers }
-      );
-      setTasks((prev) => prev.map((task) => (task._id === taskId ? res.data : task)));
-      setError("");
-    } catch (err) {
-      setError("Could not update task status");
-    }
-  };
+const updateStatus = async (taskId, newStatus) => {
+  try {
+    const res = await axios.patch(
+      `${API_URL}/projects/${projectId}/tasks/${taskId}`,
+      { status: newStatus },
+      { headers }
+    );
+    setTasks((prev) => prev.map((task) => (task._id === taskId ? res.data : task)));
+    setError("");
+  } catch (err) {
+    setError("Could not update task status");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
