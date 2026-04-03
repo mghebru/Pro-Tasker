@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation  } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -28,14 +28,13 @@ function App() {
 }
 
 function PrivateRoute({ children }) {
-  const { token, loading } = useContext(AuthContext);
-  const location = useLocation();
+  const { token } = useContext(AuthContext);
 
-  if (loading) return <div>Loading...</div>;
+  if (token) {
+    return children;
+  }
 
-  return token
-    ? children
-    : <Navigate to="/login" state={{ from: location }} replace />;
+  return <Navigate to="/login" replace />;
 }
 
 export default App;

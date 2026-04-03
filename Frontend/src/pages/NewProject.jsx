@@ -5,11 +5,12 @@ import { AuthContext } from "../context/AuthContext";
 
 export default function NewProject() {
   const { token } = useContext(AuthContext);
+  const navigate = useNavigate();
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,15 +18,14 @@ export default function NewProject() {
     setError("");
 
     try {
-      const res = await API.post(
+      const response = await API.post(
         "/projects",
         { name, description },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Redirect to project details after creation
-      navigate(`/projects/${res.data._id}`);
+      navigate(`/projects/${response.data._id}`);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to create project");
+      setError("Could not create project");
     } finally {
       setLoading(false);
     }
@@ -42,10 +42,7 @@ export default function NewProject() {
           </div>
         )}
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-lg shadow-md p-8 space-y-6"
-        >
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-8 space-y-6">
           <div>
             <label className="block text-lg font-bold text-gray-900 mb-2">
               Project Name
@@ -55,20 +52,20 @@ export default function NewProject() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter project name"
             />
           </div>
 
           <div>
             <label className="block text-lg font-bold text-gray-900 mb-2">
-              Description
+              Description (Optional)
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              placeholder="Enter project description (optional)"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Describe your project"
               rows="5"
             />
           </div>
@@ -76,7 +73,7 @@ export default function NewProject() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold rounded-lg transition"
+            className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold rounded-lg"
           >
             {loading ? "Creating..." : "Create Project"}
           </button>

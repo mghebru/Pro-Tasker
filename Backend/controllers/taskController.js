@@ -1,49 +1,38 @@
 import Task from "../models/Task.js";
 import Project from "../models/Project.js";
 
-// Creates a new task for a specific project
+// Create a new task for a project
 export const createTask = async (req, res) => {
-  // Debug log to see project ID from URL
-  console.log("projectId:", req.params);
-
   try {
-    // Extract task data from request body
     const { title, description, status } = req.body;
-    // Get project ID from URL parameters
     const { projectId } = req.params;
 
-    // Validate that title is provided
+    // Validate title is provided
     if (!title) {
-      return res.status(400).json({ message: "Title required" });
+      return res.status(400).json({ message: "Title is required" });
     }
 
-    // Verify project exists
+    // Check if project exists and user owns it
     const project = await Project.findById(projectId);
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
+    if (!project) return res.status(404).json({ message: "Project not found" });
 
-    // Check if current user owns the project
+    // Verify user owns the project
     if (project.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    // Create new task with default values
+    // Create task with default values
     const task = await Task.create({
       title,
-      description: description || "", // Default to empty string
-      status: status || "To Do", // Default status
-      project: projectId, // Link to project
-      owner: req.user._id, // Link to user
+      description: description || "",
+      status: status || "To Do",
+      project: projectId,
+      owner: req.user._id,
     });
 
-    // Return created task with 201 status
     res.status(201).json(task);
 
   } catch (error) {
-    // Log error for debugging
-    console.error("CREATE TASK ERROR:", error.message);
-    // Return error response
     res.status(500).json({
       message: "Failed to create task",
       error: error.message,
@@ -51,69 +40,58 @@ export const createTask = async (req, res) => {
   }
 };
 
-// Gets all tasks for a specific project
+// Get all tasks for a project
 export const getTasks = async (req, res) => {
-  // Get project ID from URL parameters
   const { projectId } = req.params;
 
   // Verify project exists
   const project = await Project.findById(projectId);
   if (!project) return res.status(404).json({ message: "Project not found" });
 
-  // Check if current user owns the project
+  // Verify user owns the project
   if (project.owner.toString() !== req.user._id.toString()) {
     return res.status(403).json({ message: "Not authorized" });
   }
 
   // Find all tasks for this project
   const tasks = await Task.find({ project: projectId });
-
-  // Return array of tasks
   res.json(tasks);
 };
 
-// Updates an existing task
+// Update a task
 export const updateTask = async (req, res) => {
-  // Find task by ID from URL parameter
   const task = await Task.findById(req.params.taskId);
   if (!task) return res.status(404).json({ message: "Task not found" });
 
-  // Find the project this task belongs to
+  // Get the project that owns this task
   const project = await Project.findById(task.project);
   if (!project) return res.status(404).json({ message: "Project not found" });
 
-  // Check if current user owns the project (and thus the task)
+  // Verify user owns the project (and thus the task)
   if (project.owner.toString() !== req.user._id.toString()) {
     return res.status(403).json({ message: "Not authorized" });
   }
 
-  // Update task with new data from request body
-  Object.assign(task, req.body); // title, description, status, etc.
-  // Save updated task to database
+  // Update task with new data
+  Object.assign(task, req.body);
   const updated = await task.save();
-
-  // Return updated task data
   res.json(updated);
 };
 
-// Deletes a task
+// Delete a task
 export const deleteTask = async (req, res) => {
-  // Find task by ID from URL parameter
   const task = await Task.findById(req.params.taskId);
   if (!task) return res.status(404).json({ message: "Task not found" });
 
-  // Find the project this task belongs to
+  // Get the project that owns this task
   const project = await Project.findById(task.project);
   if (!project) return res.status(404).json({ message: "Project not found" });
 
-  // Check if current user owns the project (and thus the task)
+  // Verify user owns the project (and thus the task)
   if (project.owner.toString() !== req.user._id.toString()) {
     return res.status(403).json({ message: "Not authorized" });
   }
 
-  // Delete task from database
   await task.deleteOne();
-
-  // Return success message
-  res.json({ message: "Task removed" });
+  res.json({ message: "Task deleted" });
 };

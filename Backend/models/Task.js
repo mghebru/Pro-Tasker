@@ -1,28 +1,27 @@
 import mongoose from "mongoose";
 
-// Defines the Task model schema for individual tasks within projects
+// Define Task schema for individual tasks within projects
 const taskSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true }, // Task title/name
+    title: { type: String, required: true },
     description: String, // Optional task description
     status: {
       type: String,
-      enum: ["To Do", "In Progress", "Done"], // Only allow these status values
-      default: "To Do" // Default status for new tasks
+      enum: ["To Do", "In Progress", "Done"],
+      default: "To Do"
     },
     project: {
-      type: mongoose.Schema.Types.ObjectId, // Reference to Project model
-      ref: "Project", // Links to Project collection
-      required: true // Every task must belong to a project
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project", // Reference to Project model
+      required: true
     },
     owner: {
-      type: mongoose.Schema.Types.ObjectId, // Reference to User model
-      ref: "User", // Links to User collection
-      required: true // Every task must have an owner
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", // Reference to User model
+      required: true
     }
   },
-  { timestamps: true } // Automatically adds createdAt and updatedAt fields
+  { timestamps: true }
 );
 
-// Export the Task model
 export default mongoose.model("Task", taskSchema);

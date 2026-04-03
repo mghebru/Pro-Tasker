@@ -1,12 +1,12 @@
+// Handle errors and send formatted response to client
 const errorHandler = (err, req, res, next) => {
-  // Log the error
   console.error(err.stack);
 
   // Set default error status and message
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
 
-  // Handle specific error types
+  // Handle specific MongoDB error types
   if (err.name === 'ValidationError') {
     statusCode = 400;
     message = 'Validation Error';
@@ -18,7 +18,7 @@ const errorHandler = (err, req, res, next) => {
     message = 'Duplicate field value entered';
   }
 
-  // Send error response
+  // Send error response with stack trace in development mode
   res.status(statusCode).json({
     success: false,
     error: message,

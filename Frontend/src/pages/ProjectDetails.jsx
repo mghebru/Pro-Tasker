@@ -9,54 +9,247 @@ function ProjectDetails() {
   const [tasks, setTasks] = useState([]);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [editingTaskId, setEditingTaskId] = useState(null);
-  const [editingTaskData, setEditingTaskData] = useState({});
+  const [editTitle, setEditTitle] = useState("");
+  const [editDesc, setEditDesc] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  //Fetch project details
-  const fetchProject = async () => {
+  const API_URL = "http://localhost:5000/api";
+  const token = localStorage.getItem("token");
+  const headers = { Authorization: `Bearer ${token}` };
+
+  // Load project data when component starts
+  useEffect(() => {
+    loadProject();
+    loadTasks();
+  }, [projectId]);
+
+  // Get project information
+  const loadProject = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.get(
-        `http://localhost:5000/api/projects/${projectId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setProject(res.data);
+      const response = await axios.get(`${API_URL}/projects/${projectId}`, { headers });
+      setProject(response.data);
     } catch (err) {
-      console.error("Error fetching project:", err.response || err);
-      setError(err.response?.data?.message || "Failed to load project");
+      setError("Could not load project");
     }
   };
 
-  //Fetch tasks
-  const fetchTasks = async () => {
+  // Get all tasks for this project
+  const loadTasks = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-
-      const res = await axios.get(
-        `http://localhost:5000/api/projects/${projectId}/tasks`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      setTasks(res.data);
+      const response = await axios.get(`${API_URL}/projects/${projectId}/tasks`, { headers });
+      setTasks(response.data);
       setError("");
     } catch (err) {
-      console.error("Error fetching tasks:", err.response || err);
-      setError(err.response?.data?.message || "Failed to load tasks");
+      setError("Could not load tasks");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchProject();
-    fetchTasks();
-  }, [projectId]);
+  // Add a new task
+  const addTask = async () => {
+    if (newTaskTitle.trim() === "") {
+      setError("Enter a task title");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        `${API_URL}/projects/${projectId}/tasks`,
+        { title: newTaskTitle },
+        { headers }
+      );
+
+      setTasks([...tasks, response.data]);
+      setNewTaskTitle("");
+      setError("");
+    } catch (err) {
+      setError("Could not create task");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Start editing a task
+  const startEdit = (task) => {
+    setEditingTaskId(task._id);
+    setEditTitle(task.title);
+    setEditDesc(task.description || "");
+  };
+
+  // Save edited task
+  const saveEdit = async (taskId) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/tasks/${taskId}`,
+        { title: editTitle, description: editDesc },
+        { headers }
+      );
+
+      const updatedTasks = tasks.map(t => t._id === taskId ? response.data : t);
+      setTasks(updatedTasks);
+      setEditingTaskId(null);
+    } catch (err) {
+      setError("Could not update task");
+    }
+  };
+
+  // Cancel editing
+  const cancelEdit = () => {
+    setEditingTaskId(null);
+    setEditTitle("");
+    setEditDesc("");
+  };
+
+  // Delete a task
+  const deleteTask = async (taskId) => {
+    try {
+      await axios.delete(`${API_URL}/tasks/${taskId}`, { headers });
+      const updatedTasks = tasks.filter(t => t._id !== taskId);
+      setTasks(updatedTasks);
+    } catch (err) {
+      setError("Could not delete task");
+    }
+  };
+
+  // Change task status
+  const updateStatus = async (taskId, newStatus) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/tasks/${taskId}`,
+        { status: newStatus },
+        { headers }
+      );
+
+      const updatedTasks = tasks.map(t => t._id === taskId ? response.data : t);
+      setTasks(updatedTasks);
+    } catch (err) {
+      setError("Could not update task status");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Project Header */}
+        {project && (
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">{project.name}</h1>
+            {project.description && <p className="text-lg text-gray-600">{project.description}</p>}
+          </div>
+        )}
+
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Tasks</h2>
+
+        {/* Show loading and error messages */}
+        {loading && <p className="text-blue-600">Loading...</p>}
+        {error && <p className="text-red-600 mb-4">{error}</p>}
+
+        {/* Add New Task Form */}
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="New task title"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={addTask}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            >
+              Add Task
+            </button>
+          </div>
+        </div>
+
+        {/* Task List */}
+        <div className="space-y-4">
+          {tasks.map((task) => (
+            <div key={task._id} className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+              {/* Editing Mode */}
+              {editingTaskId === task._id && (
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                  <textarea
+                    value={editDesc}
+                    onChange={(e) => setEditDesc(e.target.value)}
+                    placeholder="Task description"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    rows="3"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => saveEdit(task._id)}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="px-4 py-2 bg-gray-400 text-white rounded-lg"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* View Mode */}
+              {editingTaskId !== task._id && (
+                <div>
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{task.title}</h3>
+                      {task.description && <p className="text-gray-600 mt-2">{task.description}</p>}
+                    </div>
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                      {task.status}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2 items-center mt-4">
+                    <select
+                      value={task.status}
+                      onChange={(e) => updateStatus(task._id, e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg"
+                    >
+                      <option>To Do</option>
+                      <option>In Progress</option>
+                      <option>Done</option>
+                    </select>
+
+                    <button
+                      onClick={() => startEdit(task)}
+                      className="px-4 py-2 bg-yellow-500 text-white rounded-lg"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => deleteTask(task._id)}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
   //Create task
   const handleCreateTask = async () => {
