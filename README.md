@@ -65,5 +65,9 @@ npm run dev
 * Add tasks and track progress
 
 ## License
+**Backend:** https://pro-tasker-backend-za90.onrender.com/
+**Frontend:** https://protaskerfrontend.netlify.app/login
+
+## License
 
 MIT
